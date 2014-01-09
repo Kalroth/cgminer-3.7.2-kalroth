@@ -280,26 +280,28 @@ char *set_gpu_map(char *arg)
 
 char *set_gpu_engine(char *arg)
 {
-	int i, val1 = 0, val2 = 0, device = 0;
+	int i, min_val = 0, gpu_val = 0, exit_val = 0, device = 0;
 	char *nextptr;
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
 		return "Invalid parameters for set gpu engine";
-	get_intrange(nextptr, &val1, &val2);
-	if (val1 < 0 || val1 > 9999 || val2 < 0 || val2 > 9999)
+	get_intrangeexitval(nextptr, &min_val, &gpu_val, &exit_val); 
+	if (min_val < 0 || min_val > 9999 || gpu_val < 0 || gpu_val > 9999 || exit_val < 0 || exit_val > 9999)
 		return "Invalid value passed to set_gpu_engine";
 
-	gpus[device].min_engine = val1;
-	gpus[device].gpu_engine = val2;
+	gpus[device].min_engine = min_val;
+	gpus[device].gpu_engine = gpu_val;
+	gpus[device].gpu_engine_exit = exit_val;
 	device++;
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
-		get_intrange(nextptr, &val1, &val2);
-		if (val1 < 0 || val1 > 9999 || val2 < 0 || val2 > 9999)
+		get_intrangeexitval(nextptr, &min_val, &gpu_val, &exit_val);
+		if (min_val < 0 || min_val > 9999 || gpu_val < 0 || gpu_val > 9999 || exit_val < 0 || exit_val > 9999)
 			return "Invalid value passed to set_gpu_engine";
-		gpus[device].min_engine = val1;
-		gpus[device].gpu_engine = val2;
+		gpus[device].min_engine = min_val;
+		gpus[device].gpu_engine = gpu_val;
+		gpus[device].gpu_engine_exit = exit_val;
 		device++;
 	}
 
@@ -307,6 +309,7 @@ char *set_gpu_engine(char *arg)
 		for (i = 1; i < MAX_GPUDEVICES; i++) {
 			gpus[i].min_engine = gpus[0].min_engine;
 			gpus[i].gpu_engine = gpus[0].gpu_engine;
+			gpus[i].gpu_engine_exit = gpus[0].gpu_engine_exit;
 		}
 	}
 
@@ -351,28 +354,37 @@ char *set_gpu_fan(char *arg)
 
 char *set_gpu_memclock(char *arg)
 {
-	int i, val = 0, device = 0;
+	int i, val = 0, exit_val = 0, device = 0;
 	char *nextptr;
+	char *valuesptr;
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
 		return "Invalid parameters for set gpu memclock";
-	val = atoi(nextptr);
-	if (val < 0 || val >= 9999)
+	get_intexitval(nextptr, &val, &exit_val);
+
+	if (val < 0 || val > 9999 || exit_val < 0 || exit_val > 9999) 
 		return "Invalid value passed to set_gpu_memclock";
 
-	gpus[device++].gpu_memclock = val;
+	gpus[device].gpu_memclock = val;
+	gpus[device].gpu_memclock_exit = exit_val;
+	device++;
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
-		val = atoi(nextptr);
-		if (val < 0 || val >= 9999)
+		get_intexitval(nextptr, &val, &exit_val);
+		if (val < 0 || val > 9999 || exit_val < 0 || exit_val > 9999) 
 			return "Invalid value passed to set_gpu_memclock";
 
-		gpus[device++].gpu_memclock = val;
+		gpus[device].gpu_memclock = val;
+		gpus[device].gpu_memclock_exit = exit_val;
+		device++;
 	}
 	if (device == 1) {
 		for (i = device; i < MAX_GPUDEVICES; i++)
+		{
 			gpus[i].gpu_memclock = gpus[0].gpu_memclock;
+			gpus[i].gpu_memclock_exit = gpus[0].gpu_memclock_exit;
+		}
 	}
 
 	return NULL;

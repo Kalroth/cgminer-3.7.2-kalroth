@@ -683,6 +683,25 @@ void get_intrange(char *arg, int *val1, int *val2)
 		*val2 = *val1;
 }
 
+void get_intexitval(char *arg, int *val1, int *val2)
+{
+	if (sscanf(arg, "%d:%d", val1, val2) == 1)
+		*val2 = *val1;
+}
+
+void get_intrangeexitval(char *arg, int *val1, int *val2, int *val3)
+{
+	if (sscanf(arg, "%d:%d", val2, val3) == 2)
+	{
+		*val1 = *val2;
+	}
+	else if (sscanf(arg, "%d-%d:%d", val1, val2, val3) != 3)
+	{
+		get_intrange(arg, val1, val2);
+		*val3 = *val2;
+	}
+}
+
 static char *set_devices(char *arg)
 {
 	int i, val1 = 0, val2 = 0;

@@ -561,6 +561,8 @@ struct cgpu_info {
 	int gpu_memdiff;
 	int gpu_powertune;
 	float gpu_vddc;
+	int gpu_engine_exit;
+	int gpu_memclock_exit;
 #endif
 	int diff1;
 	double diff_accepted;

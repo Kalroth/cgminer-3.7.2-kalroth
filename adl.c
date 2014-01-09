@@ -364,7 +364,9 @@ void init_adl(int nDevs)
 
 		if (gpus[gpu].deven == DEV_DISABLED) {
 			gpus[gpu].gpu_engine =
+			gpus[gpu].gpu_engine_exit =
 			gpus[gpu].gpu_memclock =
+			gpus[gpu].gpu_memclock_exit =
 			gpus[gpu].gpu_vddc =
 			gpus[gpu].gpu_fan =
 			gpus[gpu].gpu_powertune = 0;
@@ -1434,6 +1436,16 @@ void clear_adl(int nDevs)
 		/*  Only reset the values if we've changed them at any time */
 		if (!gpus[i].has_adl || !ga->managed)
 			continue;
+
+		int lev;
+		lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
+
+		/* Set exit values of the GPU */
+		if (gpus[i].gpu_engine_exit)
+			ga->DefPerfLev->aLevels[lev].iEngineClock = gpus[i].gpu_engine_exit * 100; 
+		if (gpus[i].gpu_memclock_exit)
+			ga->DefPerfLev->aLevels[lev].iMemoryClock = gpus[i].gpu_memclock_exit * 100;
+
 		ADL_Overdrive5_ODPerformanceLevels_Set(ga->iAdapterIndex, ga->DefPerfLev);
 		free(ga->DefPerfLev);
 		ADL_Overdrive5_FanSpeed_Set(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
