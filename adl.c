@@ -467,6 +467,7 @@ void init_adl(int nDevs)
 			applog(LOG_INFO, "Failed to ADL_Overdrive5_FanSpeedInfo_Get");
 		else
 			ga->has_fanspeed = true;
+		ga->max_fanspeed_pct = -1;
 
 		/* Save the fanspeed values as defaults in case we reset later */
 		ga->DefFanSpeedValue.iSpeedType=ADL_DL_FANCTRL_SPEED_TYPE_PERCENT;
@@ -667,6 +668,8 @@ static inline int __gpu_fanspeed(struct gpu_adl *ga)
 	ga->lpFanSpeedValue.iSpeedType = ADL_DL_FANCTRL_SPEED_TYPE_RPM;
 	if (ADL_Overdrive5_FanSpeed_Get(ga->iAdapterIndex, 0, &ga->lpFanSpeedValue) != ADL_OK)
 		return -1;
+	if (ga->lpFanSpeedValue.iFanSpeed > ga->max_fanspeed_pct)
+		ga->max_fanspeed_pct = ga->lpFanSpeedValue.iFanSpeed;
 	return ga->lpFanSpeedValue.iFanSpeed;
 }
 
@@ -710,7 +713,7 @@ int gpu_fanpercent(int gpu)
 	lock_adl();
 	ret = __gpu_fanpercent(ga);
 	unlock_adl();
-	if (unlikely(ga->has_fanspeed && ret == -1)) {
+	if (unlikely(ga->has_fanspeed && ret == -1 && ga->max_fanspeed_pct != -1)) {
 #if 0
 		/* Recursive calling applog causes a hang, so disable messages */
 		applog(LOG_WARNING, "GPU %d stopped reporting fanspeed due to driver corruption", gpu);
