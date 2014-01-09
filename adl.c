@@ -469,6 +469,7 @@ void init_adl(int nDevs)
 			ga->has_fanspeed = true;
 
 		/* Save the fanspeed values as defaults in case we reset later */
+		ga->DefFanSpeedValue.iSpeedType=ADL_DL_FANCTRL_SPEED_TYPE_PERCENT;
 		ADL_Overdrive5_FanSpeed_Get(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
 		if (gpus[gpu].gpu_fan)
 			set_fanspeed(gpu, gpus[gpu].gpu_fan);
