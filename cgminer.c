@@ -2138,6 +2138,8 @@ static int total_staged(void)
 
 #ifdef HAVE_CURSES
 WINDOW *mainwin, *statuswin, *logwin;
+int knight_rider[3] = {5, 28, 56};
+bool knight_rider_increase[3] = {true, true, true};
 #endif
 double total_secs = 1.0;
 static char statusline[256];
@@ -2287,6 +2289,33 @@ static bool shared_strategy(void)
 } while (0)
 
 /* Must be called with curses mutex lock held and curses_active */
+static void curses_knight_rider(int number, int y, int stepby)
+{
+	char knight_background = '-';
+	char knight_bar;
+	int knight_bar_width = 8;
+
+	if (knight_rider[number] < 1)
+		knight_rider_increase[number] = true;
+
+	if (knight_rider[number] > 80+(knight_bar_width-1))
+		knight_rider_increase[number] = false;
+	
+	if (knight_rider_increase[number]) {
+		knight_rider[number] += stepby;
+		knight_bar = '>';
+	} else {
+		knight_rider[number] -= stepby;
+		knight_bar = '<';
+	}
+	
+	mvwhline(statuswin, y, 0, knight_background, knight_rider[number] - knight_bar_width);
+	if (knight_rider[number] - knight_bar_width < 0)
+		knight_bar_width += (knight_rider[number] - knight_bar_width);
+	mvwhline(statuswin, y, knight_rider[number] - knight_bar_width, knight_bar, knight_bar_width);
+	mvwhline(statuswin, y, knight_rider[number], knight_background, 80 - knight_rider[number]);
+
+}
 static void curses_print_status(void)
 {
 	struct pool *pool = current_pool();
@@ -2294,7 +2323,7 @@ static void curses_print_status(void)
 	wattron(statuswin, A_BOLD);
 	cg_mvwprintw(statuswin, 0, 0, " " PACKAGE " version " VERSION " - Started: %s", datestamp);
 	wattroff(statuswin, A_BOLD);
-	mvwhline(statuswin, 1, 0, '-', 80);
+	curses_knight_rider(0, 1, 3);
 	cg_mvwprintw(statuswin, 2, 0, " %s", statusline);
 	wclrtoeol(statuswin);
 	cg_mvwprintw(statuswin, 3, 0, " ST: %d  SS: %d  NB: %d  LW: %d  GF: %d  RF: %d",
@@ -2315,8 +2344,8 @@ static void curses_print_status(void)
 	wclrtoeol(statuswin);
 	cg_mvwprintw(statuswin, 5, 0, " Block: %s...  Diff:%s  Started: %s  Best share: %s   ",
 		     prev_block, block_diff, blocktime, best_share);
-	mvwhline(statuswin, 6, 0, '-', 80);
-	mvwhline(statuswin, statusy - 1, 0, '-', 80);
+	curses_knight_rider(1, 6, 2);
+	curses_knight_rider(2, statusy - 1, 1);
 	cg_mvwprintw(statuswin, devcursor - 1, 1, "[P]ool management %s[S]ettings [D]isplay options [Q]uit",
 		have_opencl ? "[G]PU management " : "");
 }
