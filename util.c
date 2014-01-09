@@ -255,8 +255,8 @@ static void set_nettime(void)
 #if CURL_HAS_KEEPALIVE
 static void keep_curlalive(CURL *curl)
 {
-	const int tcp_keepidle = 45;
-	const int tcp_keepintvl = 30;
+	const int tcp_keepidle = 5;
+	const int tcp_keepintvl = 5;
 	const long int keepalive = 1;
 
 	curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, keepalive);
