@@ -1,3 +1,16 @@
+This is a personal compile of cgminer 3.7.2 by Martin "Kalroth" Danielsen.
+Original source can be found here: http://github.com/ckolivas/cgminer/tree/v3.7.2
+
+Contact information:
+  kalroth@gmail.com
+  IRC: Kalroth in #middlecoin on irc.freenode.net.
+
+This build is made for myself and I take no responsiblity for how it acts on other computers.
+
+Compiled Windows binaries available here: http://k-dev.net/cgminer/
+
+- Original README -------------------------------------------------------------
+
 This is a multi-threaded multi-pool GPU, FPGA and ASIC miner with ATI GPU
 monitoring, (over)clocking and fanspeed support for bitcoin and derivative
 coins. Do not use on multiple block chains at the same time!
