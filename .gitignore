@@ -44,3 +44,6 @@ lib/warn-on-use.h
 mkinstalldirs
 
 *.swp
+
+*.bak
+*.bak

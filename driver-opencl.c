@@ -385,7 +385,6 @@ char *set_gpu_memclock(char *arg)
 {
 	int i, val = 0, exit_val = 0, device = 0;
 	char *nextptr;
-	char *valuesptr;
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)

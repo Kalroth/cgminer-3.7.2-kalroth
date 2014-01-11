@@ -1129,6 +1129,8 @@ extern void api(int thr_id);
 extern struct pool *current_pool(void);
 extern int enabled_pools;
 extern void get_intrange(char *arg, int *val1, int *val2);
+extern void get_intexitval(char *arg, int *val1, int *val2);
+extern void get_intrangeexitval(char *arg, int *val1, int *val2, int *val3);
 extern bool detect_stratum(struct pool *pool, char *url);
 extern void print_summary(void);
 extern void adjust_quota_gcd(void);
