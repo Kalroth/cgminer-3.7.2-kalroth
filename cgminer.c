@@ -149,6 +149,7 @@ static int opt_shares;
 bool opt_fail_only;
 static bool opt_fix_protocol;
 static bool opt_lowmem;
+static bool opt_morenotices;
 bool opt_autofan;
 bool opt_autoengine;
 bool opt_noadl;
@@ -1303,6 +1304,9 @@ static struct opt_table opt_config_table[] = {
 		     set_klondike_options, NULL, NULL,
 		     "Set klondike options clock:temptarget"),
 #endif
+	OPT_WITHOUT_ARG("--more-notices",
+			opt_set_bool, &opt_morenotices,
+			"Shows work restart and new block notices, hidden by default"),
 	OPT_WITHOUT_ARG("--load-balance",
 		     set_loadbalance, &pool_strategy,
 		     "Change multipool strategy from failover to quota based balance"),
@@ -4221,18 +4225,21 @@ static bool test_work_current(struct work *work)
 
 		work->work_block = ++work_block;
 
-		if (work->longpoll) {
-			if (work->stratum) {
-				applog(LOG_NOTICE, "Stratum from pool %d detected new block",
-				       pool->pool_no);
-			} else {
-				applog(LOG_NOTICE, "%sLONGPOLL from pool %d detected new block",
-				       work->gbt ? "GBT " : "", work->pool->pool_no);
-			}
-		} else if (have_longpoll)
-			applog(LOG_NOTICE, "New block detected on network before longpoll");
-		else
-			applog(LOG_NOTICE, "New block detected on network");
+		if (opt_morenotices)
+		{
+			if (work->longpoll) {
+				if (work->stratum) {
+					applog(LOG_NOTICE, "Stratum from pool %d detected new block",
+					       pool->pool_no);
+				} else {
+					applog(LOG_NOTICE, "%sLONGPOLL from pool %d detected new block",
+					       work->gbt ? "GBT " : "", work->pool->pool_no);
+				}
+			} else if (have_longpoll)
+				applog(LOG_NOTICE, "New block detected on network before longpoll");
+			else
+				applog(LOG_NOTICE, "New block detected on network");
+		}
 		restart_threads();
 	} else {
 		if (memcmp(pool->prev_block, bedata, 32)) {
@@ -4261,13 +4268,14 @@ static bool test_work_current(struct work *work)
 		if (work->longpoll) {
 			work->work_block = ++work_block;
 			if (shared_strategy() || work->pool == current_pool()) {
-				if (work->stratum) {
-					applog(LOG_NOTICE, "Stratum from pool %d requested work restart",
-					       pool->pool_no);
-				} else {
-					applog(LOG_NOTICE, "%sLONGPOLL from pool %d requested work restart",
-					       work->gbt ? "GBT " : "", work->pool->pool_no);
-				}
+				if (opt_morenotices)
+					if (work->stratum) {
+						applog(LOG_NOTICE, "Stratum from pool %d requested work restart",
+						       pool->pool_no);
+					} else {
+						applog(LOG_NOTICE, "%sLONGPOLL from pool %d requested work restart",
+						       work->gbt ? "GBT " : "", work->pool->pool_no);
+					}
 				restart_threads();
 			}
 		}
