@@ -528,6 +528,7 @@ struct cgpu_info {
 	int virtual_gpu;
 	int virtual_adl;
 	int intensity;
+	int xintensity;
 	bool dynamic;
 
 	cl_uint vwidth;

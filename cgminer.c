@@ -1254,6 +1254,9 @@ static struct opt_table opt_config_table[] = {
 		     "Intensity of GPU scanning (d or " MIN_SHA_INTENSITY_STR
 		     " -> " MAX_SCRYPT_INTENSITY_STR
 		     ",default: d to maintain desktop interactivity)"),
+	OPT_WITH_ARG("--xintensity|-X",
+		     set_xintensity, NULL, NULL,
+		     "Shader based intensity of GPU scanning (0 to 9999), overrides --intensity|-I."),
 #else
 	OPT_WITH_ARG("--intensity|-I",
 		     set_intensity, NULL, NULL,
