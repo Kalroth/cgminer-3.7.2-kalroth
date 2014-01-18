@@ -289,6 +289,7 @@ static char best_share[8] = "0";
 double current_diff = 0xFFFFFFFFFFFFFFFFULL;
 static char block_diff[8];
 uint64_t best_diff = 0;
+static char block_poolname[256] = "";
 
 struct block {
 	char hash[68];
@@ -2386,8 +2387,9 @@ static void curses_print_status(void)
 			pool->has_gbt ? "GBT" : "LP", pool->rpc_user);
 	}
 	wclrtoeol(statuswin);
-	cg_mvwprintw(statuswin, 5, 0, " Block: %s...  Diff:%s  Started: %s  Best share: %s   ",
-		     prev_block, block_diff, blocktime, best_share);
+	cg_mvwprintw(statuswin, 5, 0, " %s  Diff:%s  Started: %s  Best share: %s   ",
+		     block_poolname, block_diff, blocktime, best_share);
+	wclrtoeol(statuswin);
 	curses_knight_rider(1, 6, 2);
 	curses_knight_rider(2, statusy - 1, 1);
 	cg_mvwprintw(statuswin, devcursor - 1, 1, "[P]ool management %s[S]ettings [D]isplay options [Q]uit",
@@ -4184,6 +4186,7 @@ static void set_blockdiff(const struct work *work)
 	if (unlikely(current_diff != ddiff)) {
 		suffix_string(ddiff, block_diff, sizeof(block_diff), 0);
 		current_diff = ddiff;
+		sprintf(block_poolname, "%s", work->pool->poolname);
 		applog(LOG_NOTICE, "Network diff set to %s", block_diff);
 	}
 }
