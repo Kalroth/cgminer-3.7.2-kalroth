@@ -4190,7 +4190,8 @@ static void set_blockdiff(const struct work *work)
 		suffix_string(ddiff, block_diff, sizeof(block_diff), 0);
 		current_diff = ddiff;
 		sprintf(block_poolname, "%s", work->pool->poolname);
-		applog(LOG_NOTICE, "Network diff set to %s", block_diff);
+		if (opt_morenotices)
+			applog(LOG_NOTICE, "Network diff set to %s", block_diff);
 	}
 }
 
