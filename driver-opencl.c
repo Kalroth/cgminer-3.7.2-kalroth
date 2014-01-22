@@ -198,6 +198,28 @@ char *set_thread_concurrency(char *arg)
 }
 #endif
 
+char *set_cl_filename(char *arg)
+{
+	int i, device = 0;
+	char *nextptr;
+
+	nextptr = strtok(arg, ",");
+	if (nextptr == NULL)
+		return "Invalid parameters for set_cl_filename";
+
+	gpus[device++].cl_filename = strdup(nextptr);
+
+	while ((nextptr = strtok(NULL, ",")) != NULL) {
+		gpus[device++].cl_filename = strdup(nextptr);
+	}
+	if (device == 1) {
+		for (i = device; i < MAX_GPUDEVICES; i++)
+			gpus[i].cl_filename = gpus[0].cl_filename;
+	}
+	
+	return NULL;
+}
+
 static enum cl_kernels select_kernel(char *arg)
 {
 	if (!strcmp(arg, "diablo"))

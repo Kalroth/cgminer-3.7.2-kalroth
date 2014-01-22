@@ -27,6 +27,7 @@ extern char *set_lookup_gap(char *arg);
 extern char *set_thread_concurrency(char *arg);
 #endif
 extern char *set_kernel(char *arg);
+extern char *set_cl_filename(char *arg);
 void manage_gpu(void);
 extern void pause_dynamic_threads(int gpu);
 

@@ -1435,7 +1435,10 @@ static struct opt_table opt_config_table[] = {
 #ifdef USE_SCRYPT
 	OPT_WITHOUT_ARG("--scrypt",
 			opt_set_bool, &opt_scrypt,
-			"Use the scrypt algorithm for mining (litecoin only)"),
+			"Use the scrypt algorithm for mining"),
+	OPT_WITH_ARG("--cl-filename",
+		     set_cl_filename, NULL, NULL,
+		     "Sets the kernel .cl filename WITHOUT FILE EXTENSION - one value or comma separated list (e.g. scrypt130511_lantis,scrypt130511,scrypt130511_alexey)"),
 	OPT_WITH_ARG("--shaders",
 		     set_shaders, NULL, NULL,
 		     "GPU shaders per card for tuning scrypt, comma separated"),
