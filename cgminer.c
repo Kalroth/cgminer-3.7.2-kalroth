@@ -1380,7 +1380,7 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--per-device-stats",
 			opt_set_bool, &want_per_device_stats,
 			"Force verbose mode and output per-device statistics"),
-	OPT_WITH_ARG("--poolname",
+	OPT_WITH_ARG("--poolname|--name",
 		     set_poolname, NULL, NULL,
 		     "Name of pool."),
 	OPT_WITHOUT_ARG("--protocol-dump|-P",
