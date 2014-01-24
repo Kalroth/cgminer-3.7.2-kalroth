@@ -2690,6 +2690,9 @@ static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
 				return;
 			}
 			gpus[id].deven = DEV_ENABLED;
+#ifdef HAVE_ADL
+			adl_reset_device(id, false, false);
+#endif
 			applog(LOG_DEBUG, "API Pushing sem post to thread %d", thr->id);
 			cgsem_post(&thr->sem);
 		}
@@ -2727,6 +2730,9 @@ static void gpudisable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
 	}
 
 	gpus[id].deven = DEV_DISABLED;
+#ifdef HAVE_ADL
+	adl_reset_device(id, true, false);
+#endif
 
 	message(io_data, MSG_GPUDIS, id, NULL, isjson);
 }

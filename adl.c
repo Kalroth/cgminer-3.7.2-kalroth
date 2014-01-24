@@ -1485,38 +1485,53 @@ static void free_adl(void)
 #endif
 }
 
-void clear_adl(int nDevs)
+void adl_reset_device(int device_id, bool _disabling, bool _freeing)
 {
 	struct gpu_adl *ga;
-	int i;
 
 	if (!adl_active)
 		return;
 
 	lock_adl();
-	/* Try to reset values to their defaults */
-	for (i = 0; i < nDevs; i++) {
-		ga = &gpus[i].adl;
-		/*  Only reset the values if we've changed them at any time */
-		if (!gpus[i].has_adl || !ga->managed)
-			continue;
-
+	ga = &gpus[device_id].adl;
+	// Only reset the values if we've changed them at any time
+	if (gpus[device_id].has_adl && ga->managed)
+	{
 		int lev;
 		lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
 
-		/* Set exit values of the GPU */
-		if (gpus[i].gpu_engine_exit)
-			ga->DefPerfLev->aLevels[lev].iEngineClock = gpus[i].gpu_engine_exit * 100; 
-		if (gpus[i].gpu_memclock_exit)
-			ga->DefPerfLev->aLevels[lev].iMemoryClock = gpus[i].gpu_memclock_exit * 100;
-
+		ga->DefPerfLev->aLevels[lev].iEngineClock = gpus[device_id].gpu_engine * 100; 
+		ga->DefPerfLev->aLevels[lev].iMemoryClock = gpus[device_id].gpu_memclock * 100;
+		if (_disabling) // Set exit/disable values of the GPU
+		{
+			if (gpus[device_id].gpu_engine_exit)
+				ga->DefPerfLev->aLevels[lev].iEngineClock = gpus[device_id].gpu_engine_exit * 100; 
+			if (gpus[device_id].gpu_memclock_exit)
+				ga->DefPerfLev->aLevels[lev].iMemoryClock = gpus[device_id].gpu_memclock_exit * 100;
+		}
 		ADL_Overdrive5_ODPerformanceLevels_Set(ga->iAdapterIndex, ga->DefPerfLev);
-		free(ga->DefPerfLev);
-		ADL_Overdrive5_FanSpeed_Set(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
-		ADL_Overdrive5_FanSpeedToDefault_Set(ga->iAdapterIndex, 0);
+
+		if (_freeing) {
+			free(ga->DefPerfLev);
+			ADL_Overdrive5_FanSpeed_Set(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
+			ADL_Overdrive5_FanSpeedToDefault_Set(ga->iAdapterIndex, 0); 		
+		}
 	}
-	adl_active = false;
 	unlock_adl();
+}
+
+void clear_adl(int nDevs)
+{
+	int i;
+
+	if (!adl_active)
+		return;
+
+	for (i = 0; i < nDevs; i++) {
+		adl_reset_device(i, true, true);
+	}
+
+	adl_active = false;
 	free_adl();
 }
 #endif /* HAVE_ADL */

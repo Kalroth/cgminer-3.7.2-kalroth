@@ -887,6 +887,9 @@ retry:
 			goto retry;
 		}
 		gpus[selected].deven = DEV_ENABLED;
+#ifdef HAVE_ADL
+	adl_reset_device(selected, false, false);
+#endif
 		for (i = 0; i < mining_threads; ++i) {
 			thr = get_thread(i);
 			cgpu = thr->cgpu;
@@ -915,6 +918,9 @@ retry:
 			goto retry;
 		}
 		gpus[selected].deven = DEV_DISABLED;
+#ifdef HAVE_ADL 
+	adl_reset_device(selected, true, false);
+#endif
 		goto retry;
 	} else if (!strncasecmp(&input, "i", 1)) {
 		int intensity;
