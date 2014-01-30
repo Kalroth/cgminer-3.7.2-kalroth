@@ -4545,9 +4545,19 @@ void write_config(FILE *fcfg)
 #ifdef HAVE_OPENCL
 	if (nDevs) {
 		/* Write GPU device values */
-		fputs(",\n\"intensity\" : \"", fcfg);
-		for(i = 0; i < nDevs; i++)
-			fprintf(fcfg, gpus[i].dynamic ? "%sd" : "%s%d", i > 0 ? "," : "", gpus[i].intensity);
+		if ((nDevs > 0) && (gpus[0].intensity > 0)) {
+			fputs(",\n\"intensity\" : \"", fcfg);
+			for(i = 0; i < nDevs; i++)
+				fprintf(fcfg, gpus[i].dynamic ? "%sd" : "%s%d", i > 0 ? "," : "", gpus[i].intensity);
+		} else if ((nDevs > 0) && (gpus[0].xintensity > 0)) {
+			fputs(",\n\"xintensity\" : \"", fcfg);
+			for(i = 0; i < nDevs; i++)
+				fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].xintensity);
+		} else if ((nDevs > 0) && (gpus[0].rawintensity > 0)) {
+			fputs(",\n\"rawintensity\" : \"", fcfg);
+			for(i = 0; i < nDevs; i++)
+				fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].rawintensity);
+		};
 		fputs("\",\n\"vectors\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
@@ -4556,30 +4566,38 @@ void write_config(FILE *fcfg)
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].work_size);
-		fputs("\",\n\"kernel\" : \"", fcfg);
-		for(i = 0; i < nDevs; i++) {
-			fprintf(fcfg, "%s", i > 0 ? "," : "");
-			switch (gpus[i].kernel) {
-				case KL_NONE: // Shouldn't happen
-					break;
-				case KL_POCLBM:
-					fprintf(fcfg, "poclbm");
-					break;
-				case KL_PHATK:
-					fprintf(fcfg, "phatk");
-					break;
-				case KL_DIAKGCN:
-					fprintf(fcfg, "diakgcn");
-					break;
-				case KL_DIABLO:
-					fprintf(fcfg, "diablo");
-					break;
-				case KL_SCRYPT:
-					fprintf(fcfg, "scrypt");
-					break;
+		if (!opt_scrypt) {
+			fputs("\",\n\"kernel\" : \"", fcfg);
+			for(i = 0; i < nDevs; i++) {
+				fprintf(fcfg, "%s", i > 0 ? "," : "");
+				switch (gpus[i].kernel) {
+					case KL_NONE: // Shouldn't happen
+						break;
+					case KL_POCLBM:
+						fprintf(fcfg, "poclbm");
+						break;
+					case KL_PHATK:
+						fprintf(fcfg, "phatk");
+						break;
+					case KL_DIAKGCN:
+						fprintf(fcfg, "diakgcn");
+						break;
+					case KL_DIABLO:
+						fprintf(fcfg, "diablo");
+						break;
+					case KL_SCRYPT:
+						fprintf(fcfg, "scrypt");
+						break;
+				}
 			}
-		}
+		};
 #ifdef USE_SCRYPT
+		if ((nDevs > 0) && (gpus[0].cl_filename)) {
+			fputs("\",\n\"cl-filename\" : \"", fcfg);
+			for(i = 0; i < nDevs; i++)
+				fprintf(fcfg, "%s%s", i > 0 ? "," : "",
+					gpus[i].cl_filename);
+		};
 		fputs("\",\n\"lookup-gap\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
@@ -4588,21 +4606,25 @@ void write_config(FILE *fcfg)
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].opt_tc);
-		fputs("\",\n\"shaders\" : \"", fcfg);
-		for(i = 0; i < nDevs; i++)
-			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
-				(int)gpus[i].shaders);
+		if ((nDevs > 0) && (gpus[0].shaders > 0)) {
+			fputs("\",\n\"shaders\" : \"", fcfg);
+			for(i = 0; i < nDevs; i++)
+				fprintf(fcfg, "%s%d", i > 0 ? "," : "",
+					(int)gpus[i].shaders);
+		}
 #endif
 #ifdef HAVE_ADL
 		fputs("\",\n\"gpu-engine\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
-			fprintf(fcfg, "%s%d-%d", i > 0 ? "," : "", gpus[i].min_engine, gpus[i].gpu_engine);
+			fprintf(fcfg, gpus[i].gpu_engine_exit != gpus[i].gpu_engine ? "%s%d-%d:%d" : "%s%d-%d",
+			i > 0 ? "," : "", gpus[i].min_engine, gpus[i].gpu_engine, gpus[i].gpu_engine_exit);
 		fputs("\",\n\"gpu-fan\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d-%d", i > 0 ? "," : "", gpus[i].min_fan, gpus[i].gpu_fan);
 		fputs("\",\n\"gpu-memclock\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
-			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].gpu_memclock);
+			fprintf(fcfg, gpus[i].gpu_memclock_exit != gpus[i].gpu_memclock ? "%s%d:%d" : "%s%d",
+			i > 0 ? "," : "", gpus[i].gpu_memclock, gpus[i].gpu_memclock_exit);
 		fputs("\",\n\"gpu-memdiff\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].gpu_memdiff);
