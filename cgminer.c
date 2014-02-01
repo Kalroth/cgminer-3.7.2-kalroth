@@ -6047,7 +6047,7 @@ static void pool_resus(struct pool *pool)
 static struct work *hash_pop(void)
 {
 	struct work *work = NULL, *tmp;
-	int hc;
+	int hc, i;
 
 	mutex_lock(stgd_lock);
 	while (!HASH_COUNT(staged_work)) {
@@ -6066,12 +6066,24 @@ static struct work *hash_pop(void)
 		if (rc && !no_work) {
 			no_work = true;
 			applog(LOG_WARNING, "Waiting for work to be available from pools.");
+#ifdef HAVE_ADL
+			// Set all GPUs to idle (same as exit and disabled) state.
+			applog(LOG_WARNING, "Setting GPUs to idle performance.");
+			for(i = 0; i < nDevs; i++)
+				adl_reset_device(i, true, false);
+#endif
+
 		}
 	}
 
 	if (no_work) {
 		applog(LOG_WARNING, "Work available from pools, resuming.");
 		no_work = false;
+#ifdef HAVE_ADL
+		applog(LOG_WARNING, "Setting GPUs back to maximum performance.");
+		for(i = 0; i < nDevs; i++)
+			adl_reset_device(i, false, false);
+#endif
 	}
 
 	hc = HASH_COUNT(staged_work);
