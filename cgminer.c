@@ -4595,22 +4595,21 @@ void write_config(FILE *fcfg)
 		if ((nDevs > 0) && (gpus[0].cl_filename)) {
 			fputs("\",\n\"cl-filename\" : \"", fcfg);
 			for(i = 0; i < nDevs; i++)
-				fprintf(fcfg, "%s%s", i > 0 ? "," : "",
-					gpus[i].cl_filename);
+				fprintf(fcfg, "%s%s", i > 0 ? "," : "", gpus[i].cl_filename);
 		};
 		fputs("\",\n\"lookup-gap\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
-			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
-				(int)gpus[i].opt_lg);
+			fprintf(fcfg, "%s%d", i > 0 ? "," : "", (int)gpus[i].opt_lg);
+		fputs("\",\n\"gpu-threads\" : \"", fcfg);
+		for(i = 0; i < nDevs; i++)
+			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].threads, gpus[i].threads);
 		fputs("\",\n\"thread-concurrency\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
-			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
-				(int)gpus[i].opt_tc);
+			fprintf(fcfg, "%s%d", i > 0 ? "," : "", (int)gpus[i].opt_tc);
 		if ((nDevs > 0) && (gpus[0].shaders > 0)) {
 			fputs("\",\n\"shaders\" : \"", fcfg);
 			for(i = 0; i < nDevs; i++)
-				fprintf(fcfg, "%s%d", i > 0 ? "," : "",
-					(int)gpus[i].shaders);
+				fprintf(fcfg, "%s%d", i > 0 ? "," : "", (int)gpus[i].shaders);
 		}
 #endif
 #ifdef HAVE_ADL
