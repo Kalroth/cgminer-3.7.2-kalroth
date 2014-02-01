@@ -5354,11 +5354,12 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	suffix_string(dr64, displayed_rolling, sizeof(displayed_rolling), 4);
 
 	snprintf(statusline, sizeof(statusline),
-		"%s(%ds):%s (avg):%sh/s | A:%.0f  R:%.0f  HW:%d  WU:%.1f/m",
+		"%s(%ds):%s (avg):%sh/s | A:%.0f  R:%.0f  HW:%d  WU:%.1f/m  WUE:%.1f%%",
 		want_per_device_stats ? "ALL " : "",
 		opt_log_interval, displayed_rolling, displayed_hashes,
 		total_diff_accepted, total_diff_rejected, hw_errors,
-		total_diff1 / total_secs * 60);
+		total_diff1 / total_secs * 60,
+		(total_diff1 / total_secs * 60)/(total_mhashes_done / total_secs * 100) * 10);
 
 	local_mhashes_done = 0;
 out_unlock:
