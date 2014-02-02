@@ -2404,33 +2404,34 @@ static void curses_print_status(void)
 	wattroff(statuswin, A_BOLD);
 
 	wattron(statuswin, menu_attr);
-	cg_mvwprintw(statuswin, 1, 0, " [P]ool management %s[S]ettings [D]isplay options [Q]uit ",
-		have_opencl ? "[G]PU management " : "");
+	cg_mvwprintw(statuswin, 1, 0, " [P]ool management %s[S]ettings [D]isplay options [Q]uit %s",
+		have_opencl ? "[G]PU management " : "",
+		have_opencl ? "        " : "                         ");
 	wattroff(statuswin, menu_attr);
 
+	cg_mvwprintw(statuswin, 2, 0, " %s", statusline);
+	wclrtoeol(statuswin);
+
+	cg_mvwprintw(statuswin, 3, 0, " ST: %d  SS: %d  NB: %d  LW: %d  GF: %d  RF: %d",
+		total_staged(), total_stale, new_blocks,
+		local_work, total_go, total_ro);
+	wclrtoeol(statuswin);
+
 	if (shared_strategy() && total_pools > 1) {
-		cg_mvwprintw(statuswin, 2, 0, " Connected to multiple pools with%s block change notify",
+		cg_mvwprintw(statuswin, 4, 0, " Connected to multiple pools with%s block change notify",
 			have_longpoll ? "": "out");
 	} else if (pool->has_stratum) {
-		cg_mvwprintw(statuswin, 2, 0, " Connected to %s diff %s with stratum as user %s",
+		cg_mvwprintw(statuswin, 4, 0, " Connected to %s diff %s with stratum as user %s",
 			pool->sockaddr_url, pool->diff, pool->rpc_user);
 	} else {
-		cg_mvwprintw(statuswin, 2, 0, " Connected to %s diff %s with%s %s as user %s",
+		cg_mvwprintw(statuswin, 4, 0, " Connected to %s diff %s with%s %s as user %s",
 			pool->sockaddr_url, pool->diff, have_longpoll ? "": "out",
 			pool->has_gbt ? "GBT" : "LP", pool->rpc_user);
 	}
 	wclrtoeol(statuswin);
 
-	cg_mvwprintw(statuswin, 3, 0, " %s  Diff: %s  Started: %s  Best share: %s   ",
+	cg_mvwprintw(statuswin, 5, 0, " %s  Diff: %s  Started: %s  Best share: %s   ",
 		     block_poolname, block_diff, blocktime, best_share);
-	wclrtoeol(statuswin);
-
-	cg_mvwprintw(statuswin, 4, 0, " ST: %d  SS: %d  NB: %d  LW: %d  GF: %d  RF: %d",
-		total_staged(), total_stale, new_blocks,
-		local_work, total_go, total_ro);
-	wclrtoeol(statuswin);
-
-	cg_mvwprintw(statuswin, 5, 0, " %s", statusline);
 	wclrtoeol(statuswin);
 
 	curses_knight_rider(0, 6, 2);
