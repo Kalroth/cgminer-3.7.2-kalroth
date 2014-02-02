@@ -279,6 +279,13 @@ const
 #endif
 bool curses_active;
 
+#ifdef HAVE_CURSES
+#if !(defined(PDCURSES) || defined(NCURSES_VERSION))
+const
+#endif
+short default_bgcolor = COLOR_BLACK;
+#endif
+
 /* Protected by ch_lock */
 char current_hash[68];
 static char prev_block[12];
@@ -2342,6 +2349,8 @@ static bool shared_strategy(void)
 }
 
 #ifdef HAVE_CURSES
+static int menu_attr = A_REVERSE;
+static int attr_bad = A_BOLD;
 #define CURBUFSIZ 256
 #define cg_mvwprintw(win, y, x, fmt, ...) do { \
 	char tmp42[CURBUFSIZ]; \
@@ -2393,32 +2402,40 @@ static void curses_print_status(void)
 	wattron(statuswin, A_BOLD);
 	cg_mvwprintw(statuswin, 0, 0, " " PACKAGE " version " VERSION " - Started: %s", datestamp);
 	wattroff(statuswin, A_BOLD);
-	curses_knight_rider(0, 1, 3);
-	cg_mvwprintw(statuswin, 2, 0, " %s", statusline);
-	wclrtoeol(statuswin);
-	cg_mvwprintw(statuswin, 3, 0, " ST: %d  SS: %d  NB: %d  LW: %d  GF: %d  RF: %d",
-		total_staged(), total_stale, new_blocks,
-		local_work, total_go, total_ro);
-	wclrtoeol(statuswin);
+
+	wattron(statuswin, menu_attr);
+	cg_mvwprintw(statuswin, 1, 0, " [P]ool management %s[S]ettings [D]isplay options [Q]uit ",
+		have_opencl ? "[G]PU management " : "");
+	wattroff(statuswin, menu_attr);
+
 	if (shared_strategy() && total_pools > 1) {
-		cg_mvwprintw(statuswin, 4, 0, " Connected to multiple pools with%s block change notify",
+		cg_mvwprintw(statuswin, 2, 0, " Connected to multiple pools with%s block change notify",
 			have_longpoll ? "": "out");
 	} else if (pool->has_stratum) {
-		cg_mvwprintw(statuswin, 4, 0, " Connected to %s diff %s with stratum as user %s",
+		cg_mvwprintw(statuswin, 2, 0, " Connected to %s diff %s with stratum as user %s",
 			pool->sockaddr_url, pool->diff, pool->rpc_user);
 	} else {
-		cg_mvwprintw(statuswin, 4, 0, " Connected to %s diff %s with%s %s as user %s",
+		cg_mvwprintw(statuswin, 2, 0, " Connected to %s diff %s with%s %s as user %s",
 			pool->sockaddr_url, pool->diff, have_longpoll ? "": "out",
 			pool->has_gbt ? "GBT" : "LP", pool->rpc_user);
 	}
 	wclrtoeol(statuswin);
-	cg_mvwprintw(statuswin, 5, 0, " %s  Diff:%s  Started: %s  Best share: %s   ",
+
+	cg_mvwprintw(statuswin, 3, 0, " %s  Diff: %s  Started: %s  Best share: %s   ",
 		     block_poolname, block_diff, blocktime, best_share);
 	wclrtoeol(statuswin);
-	curses_knight_rider(1, 6, 2);
-	curses_knight_rider(2, statusy - 1, 1);
-	cg_mvwprintw(statuswin, devcursor - 1, 1, "[P]ool management %s[S]ettings [D]isplay options [Q]uit",
-		have_opencl ? "[G]PU management " : "");
+
+	cg_mvwprintw(statuswin, 4, 0, " ST: %d  SS: %d  NB: %d  LW: %d  GF: %d  RF: %d",
+		total_staged(), total_stale, new_blocks,
+		local_work, total_go, total_ro);
+	wclrtoeol(statuswin);
+
+	cg_mvwprintw(statuswin, 5, 0, " %s", statusline);
+	wclrtoeol(statuswin);
+
+	curses_knight_rider(0, 6, 2);
+	if (!opt_compact)
+		curses_knight_rider(2, statusy - 1, 1);
 }
 
 static void adj_width(int var, int *length)
@@ -2528,7 +2545,7 @@ static inline void change_logwinsize(void)
 			statusy = y - 2;
 		else
 			statusy = logstart;
-		logcursor = statusy + 1;
+		logcursor = statusy;
 		mvwin(logwin, logcursor, 0);
 		wresize(statuswin, statusy, x);
 	}
@@ -2553,7 +2570,7 @@ static void check_winsizes(void)
 			statusy = LINES - 2;
 		else
 			statusy = logstart;
-		logcursor = statusy + 1;
+		logcursor = statusy;
 		wresize(statuswin, statusy, x);
 		getmaxyx(mainwin, y, x);
 		y -= logcursor;
@@ -2574,11 +2591,11 @@ static void switch_logsize(bool __maybe_unused newdevs)
 			disable_curses_windows();
 #endif
 		if (opt_compact) {
-			logstart = devcursor + 1;
-			logcursor = logstart + 1;
+			logstart = devcursor;
+			logcursor = logstart;
 		} else {
-			logstart = devcursor + most_devices + 1;
-			logcursor = logstart + 1;
+			logstart = devcursor + most_devices;
+			logcursor = logstart;
 		}
 #ifdef WIN32
 		if (newdevs)
@@ -7793,6 +7810,17 @@ void enable_curses(void) {
 	}
 
 	mainwin = initscr();
+	start_color();
+#if defined(PDCURSES) || defined(NCURSES_VERSION)
+	if (ERR != use_default_colors())
+		default_bgcolor = -1;
+#endif
+	if (has_colors() && ERR != init_pair(1, COLOR_WHITE, COLOR_BLUE))
+	{
+		menu_attr = COLOR_PAIR(1);
+		if (ERR != init_pair(2, COLOR_RED, default_bgcolor))
+			attr_bad |= COLOR_PAIR(2);
+	}
 	enable_curses_windows();
 	curses_active = true;
 	statusy = logstart;
@@ -8216,9 +8244,9 @@ int main(int argc, char *argv[])
 	free(s);
 	strcat(cgminer_path, "/");
 
-	devcursor = 8;
+	devcursor = 7;
 	logstart = devcursor + 1;
-	logcursor = logstart + 1;
+	logcursor = logstart;
 
 	block = calloc(sizeof(struct block), 1);
 	if (unlikely(!block))
