@@ -126,6 +126,7 @@ bool opt_scrypt;
 #endif
 bool opt_restart = true;
 bool opt_nogpu;
+bool opt_disable_knight_rider = false;
 
 struct list_head scan_devices;
 static bool devices_enabled[MAX_DEVICES];
@@ -1197,6 +1198,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--disable-rejecting",
 			opt_set_bool, &opt_disable_pool,
 			"Automatically disable pools that continually reject shares"),
+    OPT_WITHOUT_ARG("--disable-knight-rider",
+			opt_set_bool, &opt_disable_knight_rider,
+			"Disable horizontal ruler animations"),
 	OPT_WITH_ARG("--expiry|-E",
 		     set_int_0_to_9999, opt_show_intval, &opt_expiry,
 		     "Upper bound on how many seconds after getting work we consider a share from it stale"),
@@ -2357,6 +2361,11 @@ static void curses_knight_rider(int number, int y, int stepby)
 	char knight_bar;
 	int knight_bar_width = 8;
 
+	if (opt_disable_knight_rider) {
+		mvwhline(statuswin, y, 0, knight_background, 80);
+		return;
+	}
+
 	if (knight_rider[number] < 1)
 		knight_rider_increase[number] = true;
 
@@ -2371,12 +2380,11 @@ static void curses_knight_rider(int number, int y, int stepby)
 		knight_bar = '<';
 	}
 	
-	mvwhline(statuswin, y, 0, knight_background, knight_rider[number] - knight_bar_width);
+	mvwhline(statuswin, y, 0, knight_background, 80);
 	if (knight_rider[number] - knight_bar_width < 0)
 		knight_bar_width += (knight_rider[number] - knight_bar_width);
 	mvwhline(statuswin, y, knight_rider[number] - knight_bar_width, knight_bar, knight_bar_width);
-	mvwhline(statuswin, y, knight_rider[number], knight_background, 80 - knight_rider[number]);
-
+	mvwhline(statuswin, y, 80, ' ', knight_bar_width+stepby);
 }
 static void curses_print_status(void)
 {
