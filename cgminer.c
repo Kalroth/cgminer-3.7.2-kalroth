@@ -126,7 +126,6 @@ bool opt_scrypt;
 #endif
 bool opt_restart = true;
 bool opt_nogpu;
-bool opt_disable_knight_rider = false;
 
 struct list_head scan_devices;
 static bool devices_enabled[MAX_DEVICES];
@@ -1205,9 +1204,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--disable-rejecting",
 			opt_set_bool, &opt_disable_pool,
 			"Automatically disable pools that continually reject shares"),
-    OPT_WITHOUT_ARG("--disable-knight-rider",
-			opt_set_bool, &opt_disable_knight_rider,
-			"Disable horizontal ruler animations"),
 	OPT_WITH_ARG("--expiry|-E",
 		     set_int_0_to_9999, opt_show_intval, &opt_expiry,
 		     "Upper bound on how many seconds after getting work we consider a share from it stale"),
@@ -2211,8 +2207,6 @@ static int total_staged(void)
 
 #ifdef HAVE_CURSES
 WINDOW *mainwin, *statuswin, *logwin;
-int knight_rider[3] = {5, 28, 56};
-bool knight_rider_increase[3] = {true, true, true};
 #endif
 double total_secs = 1.0;
 static char statusline[256];
@@ -2364,38 +2358,6 @@ static int attr_bad = A_BOLD;
 } while (0)
 
 /* Must be called with curses mutex lock held and curses_active */
-static void curses_knight_rider(int number, int y, int stepby)
-{
-	char knight_background = '-';
-	char knight_bar;
-	int knight_bar_width = 8;
-
-	if (opt_disable_knight_rider) {
-		mvwhline(statuswin, y, 0, knight_background, 80);
-		return;
-	}
-
-	if (knight_rider[number] < 1)
-		knight_rider_increase[number] = true;
-
-	if (knight_rider[number] > 80+(knight_bar_width-1))
-		knight_rider_increase[number] = false;
-	
-	if (knight_rider_increase[number]) {
-		knight_rider[number] += stepby;
-		knight_bar = '>';
-	} else {
-		knight_rider[number] -= stepby;
-		knight_bar = '<';
-	}
-	
-	mvwhline(statuswin, y, 0, knight_background, 80);
-	if (knight_rider[number] - knight_bar_width < 0)
-		knight_bar_width += (knight_rider[number] - knight_bar_width);
-	mvwhline(statuswin, y, knight_rider[number] - knight_bar_width, knight_bar, knight_bar_width);
-	mvwhline(statuswin, y, 80, ' ', knight_bar_width+stepby);
-}
-
 static void curses_print_uptime(void)
 {
 	struct timeval now, tv;
@@ -2459,9 +2421,9 @@ static void curses_print_status(void)
 		     block_poolname, block_diff, blocktime, best_share);
 	wclrtoeol(statuswin);
 
-	curses_knight_rider(0, 6, 2);
+	mvwhline(statuswin, 6, 0, '-', 80);
 	if (!opt_compact)
-		curses_knight_rider(2, statusy - 1, 1);
+		mvwhline(statuswin, statusy - 1, 0, '-', 80);
 }
 
 static void adj_width(int var, int *length)
