@@ -1298,6 +1298,7 @@ struct pool {
 	int quota_gcd;
 	int quota_used;
 	int works;
+	double last_block_diff;
 
 	double diff_accepted;
 	double diff_rejected;
@@ -1320,6 +1321,7 @@ struct pool {
 	unsigned int discarded_work;
 	unsigned int getfail_occasions;
 	unsigned int remotefail_occasions;
+	unsigned int disconnect_occasions;
 	struct timeval tv_idle;
 
 	double utility;
