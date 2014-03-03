@@ -466,6 +466,10 @@ struct cgminer_pool_stats {
 	uint64_t times_received;
 	uint64_t bytes_received;
 	uint64_t net_bytes_received;
+	// Latency timing
+	struct timeval request_begin;
+	struct timeval reponse_end;
+	int share_submit_latency;
 };
 
 struct cgpu_info {

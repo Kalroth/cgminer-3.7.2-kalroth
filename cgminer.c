@@ -134,7 +134,7 @@ static bool opt_display_devs;
 static bool opt_removedisabled;
 int total_devices;
 int zombie_devs;
-static int most_devices;
+static int most_devices_and_pools;
 struct cgpu_info **devices;
 bool have_opencl;
 int mining_threads;
@@ -2396,30 +2396,41 @@ static void curses_print_poolstats(void)
 {
 	int i;
 	struct pool *pool;
-	char poolstats[4][40];
-	static int d_width = 1, a_width = 1, r_width = 1, dc_width = 1;
-
-	for (i = 0; i < 4; i++) { 
-		if (total_pools > i) {
-			pool = pools[i];
-			adj_fwidth(pool->last_block_diff, &d_width);
-			adj_width(pool->accepted, &a_width);
-			adj_width(pool->rejected, &r_width);
-			adj_width(pool->disconnect_occasions, &dc_width);
-			sprintf(poolstats[i], "%-14s D:%-*.0f A:%-*d R:%-*d DC:%-*d",
-				pool->poolname,
-				d_width, pool->last_block_diff,
-				a_width, pool->accepted,
-				r_width, pool->rejected,
-				dc_width, pool->disconnect_occasions
-			); 
-		} else {
-		  poolstats[i][0] = '\0';
-		}
+	
+	int n_width = 1, pd_width = 1, cd_width = 1, a_width = 1, r_width = 1, dc_width = 1, ssl_width = 1;
+	mvwhline(statuswin, 4, 0, '-', 80);
+	devcursor = 6;
+	// A bunch of loops to calculate maximum width for values
+	for (i = 0; i < total_pools; i++) { 
+		pool = pools[i];
+		if (strlen(pool->poolname) > n_width)
+			n_width = strlen(pool->poolname);
+		while ((int)(log10(pool->last_block_diff) + 1) > cd_width)
+			cd_width++;
+		while ((int)(log10(pool->diff_accepted) + 1) > a_width)
+			a_width++;
+		while ((int)(log10(pool->diff_rejected) + 1) > r_width)
+			r_width++;
+		while ((int)(log10(pool->disconnect_occasions) + 1) > dc_width)
+			dc_width++;
+		while ((int)(log10(pool->cgminer_pool_stats.share_submit_latency) + 1) > ssl_width)
+			ssl_width++;
 	}
-	cg_mvwprintw(statuswin, 4, 0, " %-37s | %-37s", poolstats[0], poolstats[1]);
-	cg_mvwprintw(statuswin, 5, 0, " %-37s | %-37s", poolstats[2], poolstats[3]);
- }
+	// Now to output values using above widths
+	for (i = 0; i < total_pools; i++) { 
+		pool = pools[i];
+		cg_mvwprintw(statuswin, devcursor - 1, 0, " %-*s  | CD:%-*.0f A:%-*.f R:%-*.f RTT:%*dms DC:%-*d ",
+			n_width, pool->poolname,
+			cd_width, pool->last_block_diff,
+			a_width, pool->diff_accepted,
+			r_width, pool->diff_rejected,
+			ssl_width, pool->cgminer_pool_stats.share_submit_latency,
+			dc_width, pool->disconnect_occasions
+		); 
+		wclrtoeol(statuswin);
+		devcursor += 1;
+	}
+}
 
 static void curses_print_status(void)
 {
@@ -2456,13 +2467,14 @@ static void curses_print_status(void)
 				pool->sockaddr_url, pool->diff, have_longpoll ? "": "out",
 				pool->has_gbt ? "GBT" : "LP", pool->rpc_user);
 		}
+		wclrtoeol(statuswin);
+		
 		cg_mvwprintw(statuswin, 5, 0, " %s  Diff: %s  Started: %s  Best share: %s   ",
 				block_poolname, block_diff, blocktime, best_share);
 		wclrtoeol(statuswin);
 	}
-	wclrtoeol(statuswin);
 
-	mvwhline(statuswin, 6, 0, '-', 80);
+	mvwhline(statuswin, devcursor - 1, 0, '-', 80);
 	if (!opt_compact)
 		mvwhline(statuswin, statusy - 1, 0, '-', 80);
 }
@@ -2484,7 +2496,7 @@ static void curses_print_devstatus(struct cgpu_info *cgpu, int count)
 	if (devcursor + count > LINES - 2)
 		return;
 
-	if (count >= most_devices)
+	if (count >= most_devices_and_pools)
 		return;
 
 	if (cgpu->dev_start_tv.tv_sec == 0)
@@ -2611,7 +2623,7 @@ static void switch_logsize(bool __maybe_unused newdevs)
 			logstart = devcursor;
 			logcursor = logstart;
 		} else {
-			logstart = devcursor + most_devices;
+			logstart = devcursor + most_devices_and_pools;
 			logcursor = logstart;
 		}
 #ifdef WIN32
@@ -5698,6 +5710,15 @@ static void *stratum_rthread(void *userdata)
 			s = NULL;
 		} else
 			s = recv_line(pool);
+
+		if ((pool->cgminer_pool_stats.request_begin.tv_sec > 0) || (pool->cgminer_pool_stats.request_begin.tv_usec > 0)) {
+			cgtime(&pool->cgminer_pool_stats.reponse_end);
+			pool->cgminer_pool_stats.share_submit_latency = ms_tdiff(&pool->cgminer_pool_stats.reponse_end, &pool->cgminer_pool_stats.request_begin);
+
+			pool->cgminer_pool_stats.request_begin.tv_sec = 0;
+			pool->cgminer_pool_stats.request_begin.tv_usec = 0;
+		}
+
 		if (!s) {
 			applog(LOG_NOTICE, "Stratum connection to %s interrupted", pool->poolname);
 			pool->getfail_occasions++;
@@ -5817,6 +5838,8 @@ static void *stratum_sthread(void *userdata)
 			pool->rpc_user, work->job_id, nonce2hex, work->ntime, noncehex, sshare->id);
 
 		applog(LOG_INFO, "Submitting share %08lx to %s", (long unsigned int)htole32(hash32[6]), pool->poolname);
+
+		cgtime(&pool->cgminer_pool_stats.request_begin);
 
 		/* Try resubmitting for up to 2 minutes if we fail to submit
 		 * once and the stratum pool nonce1 still matches suggesting
@@ -7987,8 +8010,8 @@ struct _cgpu_devid_counter {
 
 static void adjust_mostdevs(void)
 {
-	if (total_devices - zombie_devs > most_devices)
-		most_devices = total_devices - zombie_devs;
+	if (total_devices - zombie_devs > most_devices_and_pools)
+		most_devices_and_pools = (total_devices + total_pools) - zombie_devs;
 }
 
 bool add_cgpu(struct cgpu_info *cgpu)
@@ -8422,7 +8445,7 @@ int main(int argc, char *argv[])
 		quit(1, "All devices disabled, cannot mine!");
 #endif
 
-	most_devices = total_devices;
+	most_devices_and_pools = total_devices + total_pools;
 
 	load_temp_cutoffs();
 
@@ -8430,7 +8453,7 @@ int main(int argc, char *argv[])
 		devices[i]->cgminer_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
 
 	if (!opt_compact) {
-		logstart += most_devices;
+		logstart += most_devices_and_pools - 1;
 		logcursor = logstart + 1;
 #ifdef HAVE_CURSES
 		check_winsizes();
