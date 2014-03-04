@@ -8011,7 +8011,7 @@ struct _cgpu_devid_counter {
 static void adjust_mostdevs(void)
 {
 	if (total_devices - zombie_devs > most_devices_and_pools)
-		most_devices_and_pools = (total_devices + total_pools) - zombie_devs;
+		most_devices_and_pools = (total_devices + (shared_strategy() ? total_pools : 1)) - zombie_devs;
 }
 
 bool add_cgpu(struct cgpu_info *cgpu)
@@ -8445,7 +8445,7 @@ int main(int argc, char *argv[])
 		quit(1, "All devices disabled, cannot mine!");
 #endif
 
-	most_devices_and_pools = total_devices + total_pools;
+	most_devices_and_pools = total_devices + (shared_strategy() ? total_pools : 1);
 
 	load_temp_cutoffs();
 
