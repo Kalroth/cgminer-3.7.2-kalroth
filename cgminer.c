@@ -4273,11 +4273,7 @@ static int block_sort(struct block *blocka, struct block *blockb)
 /* Decode the current block difficulty which is in packed form */
 static void set_blockdiff(const struct work *work)
 {
-	uint8_t pow = work->data[72];
-	int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
-	uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
-	double numerator = 0xFFFFULL << powdiff;
-	double ddiff = numerator / (double)diff32;
+	double ddiff = get_work_coindiff(work);
 
 	if (unlikely(current_diff != ddiff)) {
 		work->pool->last_block_diff = ddiff;
@@ -6648,6 +6644,8 @@ static void hash_sole_work(struct thr_info *mythr)
 
 			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 			pthread_testcancel();
+			
+			work->pool->last_block_diff = get_work_coindiff(work);
 
 			/* tv_end is == &getwork_start */
 			cgtime(&getwork_start);
