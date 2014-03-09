@@ -5529,7 +5529,8 @@ static bool parse_stratum_response(struct pool *pool, char *s)
 			pool->diff_accepted += pool_diff;
 			mutex_unlock(&stats_lock);
 		} else {
-			applog(LOG_NOTICE, "Rejected untracked stratum share from %s", pool->poolname);
+			if (opt_morenotices) // Cheap hack to fix Clevermining spam. :)
+				applog(LOG_NOTICE, "Rejected untracked stratum share from %s", pool->poolname);
 
 			mutex_lock(&stats_lock);
 			total_rejected++;
