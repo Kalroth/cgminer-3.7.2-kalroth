@@ -2791,7 +2791,7 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 
 		applog(LOG_DEBUG, "PROOF OF WORK RESULT: false (booooo)");
 		if (!QUIET) {
-			char where[20];
+			char where[32];
 			char disposition[36] = "reject";
 			char reason[32];
 
