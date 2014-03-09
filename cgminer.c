@@ -2397,9 +2397,10 @@ static void curses_print_poolstats(void)
 	int i;
 	struct pool *pool;
 	
-	int n_width = 1, pd_width = 1, cd_width = 1, a_width = 1, r_width = 1, dc_width = 1, ssl_width = 1;
+	int n_width = 1, pd_width = 1, cd_width = 1, a_width = 1, r_width = 1, q_width = 1, qu_width = 1, dc_width = 1, ssl_width = 1;
 	mvwhline(statuswin, 4, 0, '-', 80);
 	devcursor = 6;
+	
 	// A bunch of loops to calculate maximum width for values
 	for (i = 0; i < total_pools; i++) { 
 		pool = pools[i];
@@ -2411,6 +2412,10 @@ static void curses_print_poolstats(void)
 			a_width++;
 		while ((int)(log10(pool->diff_rejected) + 1) > r_width)
 			r_width++;
+		while ((int)(log10(pool->quota) + 1) > q_width)
+			q_width++;
+		while ((int)(log10((pool->quota_used > pool->quota ? pool->quota : pool->quota_used )) + 1) > qu_width)
+			qu_width++;
 		while ((int)(log10(pool->disconnect_occasions) + 1) > dc_width)
 			dc_width++;
 		while ((int)(log10(pool->cgminer_pool_stats.share_submit_latency) + 1) > ssl_width)
@@ -2419,12 +2424,14 @@ static void curses_print_poolstats(void)
 	// Now to output values using above widths
 	for (i = 0; i < total_pools; i++) { 
 		pool = pools[i];
-		cg_mvwprintw(statuswin, devcursor - 1, 0, " %-*s  | CD:%-*.0f A:%-*.f R:%-*.f RTT:%*dms DC:%-*d ",
+		cg_mvwprintw(statuswin, devcursor - 1, 0, " %-*s  | CD:%-*.0f A:%-*.f R:%-*.f RTT:%*dms Q:%*d/%-*d DC:%-*d ",
 			n_width, pool->poolname,
 			cd_width, pool->last_block_diff,
 			a_width, pool->diff_accepted,
 			r_width, pool->diff_rejected,
 			ssl_width, pool->cgminer_pool_stats.share_submit_latency,
+			qu_width, (pool->quota_used > pool->quota ? pool->quota : pool->quota_used ),
+			q_width, pool->quota,
 			dc_width, pool->disconnect_occasions
 		); 
 		wclrtoeol(statuswin);
