@@ -6348,9 +6348,9 @@ static void submit_work_async(struct work *work)
 
 	if (stale_work(work, true)) {
 		if (opt_submit_stale)
-			applog(LOG_NOTICE, "%s stale share detected, submitting as user requested", pool->poolname);
+			applog(LOG_NOTICE, "%s stale share detected, submitting (user)", pool->poolname);
 		else if (pool->submit_old)
-			applog(LOG_NOTICE, "%s stale share detected, submitting as pool requested", pool->poolname);
+			applog(LOG_NOTICE, "%s stale share detected, submitting (pool)", pool->poolname);
 		else {
 			applog(LOG_NOTICE, "%s stale share detected, discarding", pool->poolname);
 			sharelog("discard", work);
