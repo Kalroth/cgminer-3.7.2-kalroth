@@ -168,6 +168,7 @@ int opt_api_mcast_port = 4028;
 bool opt_api_network;
 bool opt_delaynet;
 bool opt_disable_pool;
+bool opt_disable_client_reconnect = false;
 static bool no_work;
 char *opt_icarus_options = NULL;
 char *opt_icarus_timing = NULL;
@@ -1378,6 +1379,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--no-pool-disable",
 			opt_set_invbool, &opt_disable_pool,
 			opt_hidden),
+	OPT_WITHOUT_ARG("--no-client-reconnect",
+			opt_set_invbool, &opt_disable_client_reconnect,
+			"Disable 'client.reconnect' stratum functionality"),
 	OPT_WITHOUT_ARG("--no-restart",
 			opt_set_invbool, &opt_restart,
 #ifdef HAVE_OPENCL

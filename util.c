@@ -1664,6 +1664,11 @@ static bool parse_diff(struct pool *pool, json_t *val)
 
 static bool parse_reconnect(struct pool *pool, json_t *val)
 {
+	if (opt_disable_client_reconnect)
+		return false;
+
+	applog(LOG_ERR, "WARNING: POTENTIAL CLIENT.EXPLOIT!");
+
 	char *url, *port, address[256];
 
 	memset(address, 0, 255);
